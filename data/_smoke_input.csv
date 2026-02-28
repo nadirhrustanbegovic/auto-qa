@@ -1,0 +1,228 @@
+﻿"SEND_ID","HAS_SHOPIFY","COMPANY_NAME","COMPANY_WEBSITE","PERSONA","MESSAGE_TONE","CONVERSATION_JSON","LAST_5_PRODUCTS","ORDERS","COUPONS","COMPANY_NOTES","ESCALATION_TOPICS","BLOCKLISTED_WORDS"
+"018f0320-c269-45e4-f000-0000552f8381","true","Rainbow","https://rainbowshops.com","Maya","Polished","[
+  {
+    ""date_time"": ""2024-03-24 12:12:53.405"",
+    ""message_media"": [],
+    ""message_text"": ""Rainbow Shops: Great timing! A new batch of hot trends just landed.\n\nShop your Spring Break wardrobe for HALF the cost!! https://rainbow.attn.tv/l/-MV/t3-nJ . "",
+    ""message_type"": ""system""
+  },
+  {
+    ""date_time"": ""2024-03-26 13:12:53.791"",
+    ""message_media"": [],
+    ""message_text"": ""Rainbow Shops: If you're gonna work out on Spring Break, you GOTTA make it a HOT GIRL workout!\n\nSexy ACTIVEWEAR from $3.99 https://rainbow.attn.tv/l/miC/t3-nJ ."",
+    ""message_type"": ""system""
+  },
+  {
+    ""date_time"": ""2024-03-28 13:12:23.080"",
+    ""message_media"": [],
+    ""message_text"": ""Rainbow Shops: Are you a Dirty Matcha or a Dirty Shirley? \n\nEVERY day is a Thirsty Thursday on Spring Break. Now serving: https://rainbow.attn.tv/l/jYI/t3-nJ ."",
+    ""message_type"": ""system""
+  },
+  {
+    ""date_time"": ""2024-03-29 13:12:48.572"",
+    ""message_media"": [],
+    ""message_text"": ""Rainbow Shops: $10 SHOES that fit perfectly into your carry-on.\n\nDestination: Spring Break! https://rainbow.attn.tv/l/Ted/t3-nJ . "",
+    ""message_type"": ""system""
+  },
+  {
+    ""date_time"": ""2024-03-31 12:12:41.621"",
+    ""message_media"": [],
+    ""message_text"": ""Rainbow Shops: Sometimes putting all your eggs in one basket is a good thing.\n\nADD TO CART & start collecting compliments. https://rainbow.attn.tv/l/rzC/t3-nJ ."",
+    ""message_type"": ""system""
+  },
+  {
+    ""date_time"": ""2024-04-01 13:12:59.318"",
+    ""message_media"": [],
+    ""message_text"": ""Rainbow Shops: Shop our latest Spring picks from just $1.99.\n\nFresh TOPS, SETS, BOTTOMS, SHOES, ACCESSORIES here: https://rainbow.attn.tv/l/Inq/t3-nJ . "",
+    ""message_type"": ""system""
+  },
+  {
+    ""date_time"": ""2024-04-02 13:12:32.412"",
+    ""message_media"": [],
+    ""message_text"": ""Rainbow Shops: Paradise-worthy styles that will make you look like a siren queen. From $7.97! https://rainbow.attn.tv/l/Bu3/t3-nJ . "",
+    ""message_type"": ""system""
+  },
+  {
+    ""date_time"": ""2024-04-04 13:10:32.742"",
+    ""message_media"": [],
+    ""message_text"": ""Rainbow Shops: No more dreaming. These festive finds will have you California Dream-y!\n\nFESTIVAL FITS from $5.99 https://rainbow.attn.tv/l/Vwi/t3-nJ . "",
+    ""message_type"": ""system""
+  },
+  {
+    ""date_time"": ""2024-04-05 13:10:53.864"",
+    ""message_media"": [],
+    ""message_text"": ""Rainbow Shops: Espadrille Sandals, Crochet Sneakers, and Pendant Slides. And we're just getting started.\n\nTap to shop: https://rainbow.attn.tv/l/Pfo/t3-nJ ."",
+    ""message_type"": ""system""
+  },
+  {
+    ""date_time"": ""2024-04-07 13:12:37.094"",
+    ""message_media"": [],
+    ""message_text"": ""Rainbow Shops: The HOT DENIM you need to buy right now!\n\nShort-shorts, skirts, light jackets + more. From $9.99. https://rainbow.attn.tv/l/uYg/t3-nJ . "",
+    ""message_type"": ""system""
+  },
+  {
+    ""date_time"": ""2024-04-09 13:10:37.130"",
+    ""message_media"": [],
+    ""message_text"": ""Rainbow Shops: Cherry Blossoms are not the only ones in full bloom this month.\n\nTap to shop new styles as they unfold. https://rainbow.attn.tv/l/sbF/t3-nJ . "",
+    ""message_type"": ""system""
+  },
+  {
+    ""date_time"": ""2024-04-12 13:10:30.493"",
+    ""message_media"": [],
+    ""message_text"": ""Rainbow Shops: Maximize your weekend with festival-friendly maxi dresses and more! From $5.99!!\n\nhttps://rainbow.attn.tv/l/gkU/t3-nJ . "",
+    ""message_type"": ""system""
+  },
+  {
+    ""date_time"": ""2024-04-13 11:55:34.585"",
+    ""message_media"": [],
+    ""message_text"": ""Rainbow Shops: Those Metal Pendant Flat Thong Sandals you loved? They're still waiting for you! Perfect for a sunny stroll or beach day. \n\nMake them yours now: https://rainbow.attn.tv/sl/te8PLR8j ."",
+    ""message_type"": ""system""
+  },
+  {
+    ""date_time"": ""2024-04-16 13:10:36.129"",
+    ""message_media"": [],
+    ""message_text"": ""Rainbow Shops: Soft sets for cozy Sunday mornings, satin nighties for steamy Saturday nights.\n\nTap to shop the mood! https://rainbow.attn.tv/l/jpR/t3-nJ . "",
+    ""message_type"": ""system""
+  },
+  {
+    ""date_time"": ""2024-04-19 13:11:52.313"",
+    ""message_media"": [],
+    ""message_text"": ""Rainbow Shops: Bring all the fun from the desert sun straight to your closet.\n\nFestival Vibes this way... https://rainbow.attn.tv/l/ODK/t3-nJ . "",
+    ""message_type"": ""system""
+  },
+  {
+    ""date_time"": ""2024-04-21 20:06:31.525"",
+    ""message_media"": [],
+    ""message_text"": ""Rainbow Shops: Your items are selling out! Avoid FOMO and say hello to your new fits. Check out this way: https://rainbow.attn.tv/l/pji/t3-nJ "",
+    ""message_type"": ""system""
+  },
+  {
+    ""date_time"": ""2024-04-21 20:06:54.781"",
+    ""message_media"": [],
+    ""message_text"": ""Price?"",
+    ""message_type"": ""customer""
+  },
+  {
+    ""agent"": 62551,
+    ""date_time"": ""2024-04-21 20:07:09.680"",
+    ""message_id"": ""018f0320-c269-45e4-f000-0000552f8381"",
+    ""message_media"": [],
+    ""message_text"": ""Rainbow Shops: I'm sorry, but I don't have information about the price of a specific product. Could you please specify the product you're interested in?"",
+    ""message_type"": ""agent""
+  }
+]","[
+  {
+    ""product_link"": ""https://www.rainbowshops.com/products/black-clear-tote-bag-1124074396847?utm_source=facebook-fb&utm_medium=cpc-Facebook_Mobile_Feed&utm_campaign=cid-6613110772534-cn-%5Bc1--1-pro%5D-%5Bc2-scale%5D-%5Bc3--asc-p%5D-%5Bc4-20240322%5D-%5Bc5-asb%5D-%5Bc6--auto%5D-%5Bc7-n%5D-%5Bspec1-asc-wc-30percentcap-website-and-shop%5D++Campaign-cd&utm_content=sid-6613110776934-sn-%5Bc1--1-pro%5D-%5Bc2-scale%5D-%5Bc3--asc-p%5D-%5Bc4-20240322%5D-%5Bc5-asb%5D-%5Bc6--auto%5D-%5Bc7-n%5D-%5Bspec1-asc-wc-30percentcap-website-and-shop%5D++Ad+set&utm_term=aid-6613110773334-an-%5Ba1-dpa%5D-%5Ba2-20240116%5D-%5Ba3-dpa-plus-sized%5D-%5Bbc%3Asale-v1%5D-%5Bh%3Aname%5D-%5Bd%3Aprice%5D-%5Blp%3Apdp%5D-%5Bcta%3Alearn-more%5D-%5Bedited%5D&utm_marketing_tactic=retention&utm_id=6613110772534&fbclid=IwAR1WSmvLtokNRgytz3FjYylOavGNv5BrI5R0mAqucCcJ7LHGnwNxBmzZcrE_aem_AfEd7nn1_I9Uly3M-qk3_9vVclQhQFs6b8KHRgEMIV9MH2i1fBRCFUQ7rCP-QSsHM06KUcTAxBWkJ8TiUjYy56IQ&campaign_id=6613110776934&ad_id=6613113331934"",
+    ""product_name"": ""Clear Tote Bag"",
+    ""view_date"": ""2024-04-18""
+  },
+  {
+    ""product_link"": ""https://www.rainbowshops.com/products/black-rose-band-slide-sandals-1112004062891"",
+    ""product_name"": ""Rose Band Slide Sandals"",
+    ""view_date"": ""2024-04-16""
+  },
+  {
+    ""product_link"": ""https://www.rainbowshops.com/products/turquoise-rose-band-slide-sandals-1112004062891"",
+    ""product_name"": ""Rose Band Slide Sandals"",
+    ""view_date"": ""2024-04-16""
+  },
+  {
+    ""product_link"": ""https://www.rainbowshops.com/products/black-rose-band-slide-sandals-1112004062891"",
+    ""product_name"": ""Rose Band Slide Sandals"",
+    ""view_date"": ""2024-04-16""
+  },
+  {
+    ""product_link"": ""https://www.rainbowshops.com/products/black-metal-pendant-flat-thong-sandals-1112004063609?variant=42328053678263"",
+    ""product_name"": ""Metal Pendant Flat Thong Sandals"",
+    ""view_date"": ""2024-04-14""
+  }
+]","[
+  {
+    ""coupon"": """",
+    ""currency"": ""USD"",
+    ""date_time"": ""2023-11-27 19:25:01.431"",
+    ""discount_amount"": 0,
+    ""order_date"": ""2023-11-27"",
+    ""order_id"": ""5058650341559"",
+    ""order_number"": ""5058650341559"",
+    ""products"": [
+      {
+        ""product_currency"": ""USD"",
+        ""product_id"": ""7361695678647"",
+        ""product_link"": ""https://rainbowshops-prod.myshopify.com/products/pink-rhinestone-twist-strappy-stiletto-slide-sandals-3111004069919"",
+        ""product_name"": ""Rhinestone Twist Strappy Stiletto Slide Sandals"",
+        ""product_price"": 10
+      }
+    ],
+    ""total"": 19.16
+  },
+  {
+    ""coupon"": """",
+    ""currency"": ""USD"",
+    ""date_time"": ""2023-11-18 03:13:20.928"",
+    ""discount_amount"": 0,
+    ""order_date"": ""2023-11-18"",
+    ""order_id"": ""5042109415607"",
+    ""order_number"": ""5042109415607"",
+    ""products"": [
+      {
+        ""product_currency"": ""USD"",
+        ""product_id"": ""7300320395447"",
+        ""product_link"": ""https://rainbowshops-prod.myshopify.com/products/black-suede-bow-tie-block-heel-slide-sandals-1111076651077"",
+        ""product_name"": ""Bow Tie Block Heel Slide Sandals"",
+        ""product_price"": 10
+      }
+    ],
+    ""total"": 35.14
+  },
+  {
+    ""coupon"": """",
+    ""currency"": ""USD"",
+    ""date_time"": ""2023-11-18 03:13:20.927"",
+    ""discount_amount"": 0,
+    ""order_date"": ""2023-11-18"",
+    ""order_id"": ""5042109415607"",
+    ""order_number"": ""5042109415607"",
+    ""products"": [
+      {
+        ""product_currency"": ""USD"",
+        ""product_id"": ""7361695678647"",
+        ""product_link"": ""https://rainbowshops-prod.myshopify.com/products/pink-rhinestone-twist-strappy-stiletto-slide-sandals-3111004069919"",
+        ""product_name"": ""Rhinestone Twist Strappy Stiletto Slide Sandals"",
+        ""product_price"": 15
+      }
+    ],
+    ""total"": 35.14
+  },
+  {
+    ""coupon"": """",
+    ""currency"": ""USD"",
+    ""date_time"": ""2023-08-25 14:38:36.688"",
+    ""discount_amount"": 0,
+    ""order_date"": ""2023-08-25"",
+    ""order_id"": ""4961214628023"",
+    ""order_number"": ""4961214628023"",
+    ""products"": [
+      {
+        ""product_currency"": ""USD"",
+        ""product_id"": ""7275776704695"",
+        ""product_link"": ""https://rainbowshops-prod.myshopify.com/products/brown-drawstring-waist-tank-jumpsuit-1045054262450"",
+        ""product_name"": ""Drawstring Waist Tank Jumpsuit"",
+        ""product_price"": 6.59
+      }
+    ],
+    ""total"": 15.53
+  }
+]","[
+  {
+    ""coupon"": ""k7y-e99-7gf"",
+    ""status"": ""ACTIVE"",
+    ""value"": ""10""
+  }
+]","# 📬 SEND TO CS
+
+• No ESC for this client, send everything to CS
+# 📢 TONE
+
+• Close the convo once the client takes over!
+","[]","[]"

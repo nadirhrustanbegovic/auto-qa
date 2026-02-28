@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run assess_csv.py",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/assess_csv.py",
+      "cwd": "${workspaceFolder}",
+      "args": [
+        "--input",
+        "data/input.csv",
+        "--output",
+        "data/output.jsonl"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}
