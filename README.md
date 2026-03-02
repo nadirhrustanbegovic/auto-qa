@@ -1,34 +1,36 @@
-# QA LLM Auto-Grader (Local)
+# QA Auto-Grader (Local)
 
-This repo reads a CSV of scenarios, extracts the last agent message from each conversation JSON, checks blocked words, and asks a local instruct model to grade **clarity** and **tone**.
+This project grades support-agent messages from CSV using:
+- prompt rules
+- policy retrieval (RAG) from local docs
 
-## Model recommendation (local, instruction-tuned)
-- **Llama 3.1 8B Instruct** (good instruction-following, strong general quality, runs locally on a single GPU; can run on CPU with lower throughput).
+Each result is a decision:
+- `pass`: `1` or `0`
+- `justification`: short reason with a direct quote
+- `source`: `rag` or `prompt` + the quote used
 
-## Local runtime (Ollama)
-1. Install Ollama
-2. Pull a model, e.g.
-   - `ollama pull llama3.1:8b-instruct`
-3. Create a venv and install deps:
-   - `python -m venv .venv`
-   - mac/linux: `source .venv/bin/activate`
-   - windows: `.venv\Scripts\activate`
-   - `pip install -r requirements.txt`
-4. Copy env file and edit as needed:
-   - `cp .env.example .env`
+## Quick Start
 
-## Run
-- `python scripts/assess_csv.py --input data/input.csv --output data/output.jsonl`
+1. Install dependencies:
+`.\.venv\Scripts\python -m pip install -r requirements.txt`
 
-Output is JSON Lines (one record per scenario). Use `--output data/output.csv` to write CSV instead.
+2. Pull Ollama models (once):
+`ollama pull nomic-embed-text`
+`ollama pull llama3.1:8b`
 
-## CSV expectations
-Required columns:
-- `scenario_id`
-- `conversation` (a JSON object/array as a string)
-- `message_tone` (preferred tone label/description)
-- `blocked_words` (comma-separated list or JSON array; optional)
+3. Build policy index from files in `data/docs/`:
+`.\.venv\Scripts\python scripts/rag_ingest.py --reset`
 
-## Notes
-- Blocked words detection is a literal match (case-insensitive) with word-boundary checks where possible.
-- Tone comparison is done by the model: it infers tone of the last agent message and compares against `message_tone`.
+4. Run grading:
+`.\.venv\Scripts\python scripts/assess_csv.py --input data/input.csv --output data/output.jsonl --prompt prompts/sample_prompt_1.md --strict-decision-output`
+
+## Main files
+
+- Prompt examples:
+  - `prompts/sample_prompt_1.md`
+  - `prompts/sample_prompt_2.md`
+- Grader: `scripts/assess_csv.py`
+- Policy indexer: `scripts/rag_ingest.py`
+- Optional RAG query tool: `scripts/rag_query.py`
+
+For simple step-by-step instructions, see `How to Use.md`.

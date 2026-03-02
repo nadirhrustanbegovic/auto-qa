@@ -2,14 +2,35 @@
 import argparse
 import csv
 import json
+import math
 import os
+import random
 import re
+import sqlite3
 import sys
 from typing import Any, Dict, List, Optional
 
 import requests
 from dotenv import load_dotenv
 from tqdm import tqdm
+
+DECISION_OUTPUT_SPEC = """
+Return only valid JSON with exactly this schema:
+{
+  "pass": 1 or 0,
+  "justification": "short reason that includes a direct quote",
+  "source": {
+    "type": "rag" or "prompt",
+    "quote": "direct quote used as evidence"
+  }
+}
+
+Rules:
+- pass=1 means pass, pass=0 means fail.
+- justification must include at least one direct quote from either policy_context (RAG) or this prompt text.
+- source.type must match where the quote came from.
+- source.quote must be the exact quoted text used as evidence.
+"""
 
 
 def _set_csv_field_limit() -> None:
@@ -175,8 +196,15 @@ def _resolve_ollama_model(host: str, configured_model: str) -> str:
         return requested
 
 
-def _ollama_chat(host: str, model: str, system_prompt: str, user_payload: Dict[str, Any],
-                temperature: float, max_tokens: int) -> str:
+def _ollama_chat(
+    host: str,
+    model: str,
+    system_prompt: str,
+    user_payload: Dict[str, Any],
+    temperature: float,
+    max_tokens: int,
+    force_json: bool = True,
+) -> str:
     url = host.rstrip("/") + "/api/chat"
     messages = [
         {"role": "system", "content": system_prompt},
@@ -188,6 +216,8 @@ def _ollama_chat(host: str, model: str, system_prompt: str, user_payload: Dict[s
         "options": {"temperature": temperature, "num_predict": max_tokens},
         "stream": False,
     }
+    if force_json:
+        body["format"] = "json"
     r = requests.post(url, json=body, timeout=300)
     r.raise_for_status()
     data = r.json()
@@ -209,6 +239,145 @@ def _safe_json_loads(s: str) -> Dict[str, Any]:
         return json.loads(m.group(0))
 
 
+def _normalize_decision_output(obj: Dict[str, Any]) -> Dict[str, Any]:
+    out = {"pass": 0, "justification": "", "source": {"type": "", "quote": ""}}
+    if not isinstance(obj, dict):
+        return out
+
+    # Primary desired fields.
+    p = obj.get("pass")
+    if isinstance(p, bool):
+        out["pass"] = 1 if p else 0
+    elif isinstance(p, (int, float)):
+        out["pass"] = 1 if int(p) == 1 else 0
+    elif isinstance(p, str):
+        pv = p.strip().lower()
+        if pv in ("1", "pass", "true"):
+            out["pass"] = 1
+        else:
+            out["pass"] = 0
+
+    just = obj.get("justification")
+    if isinstance(just, str):
+        out["justification"] = just.strip()
+
+    src = obj.get("source")
+    if isinstance(src, dict):
+        st = src.get("type")
+        sq = src.get("quote")
+        if isinstance(st, str):
+            out["source"]["type"] = st.strip().lower()
+        if isinstance(sq, str):
+            out["source"]["quote"] = sq.strip()
+
+    # Backward-compatible mapping from old schema.
+    if "overall" in obj and isinstance(obj.get("overall"), dict):
+        ov = obj["overall"]
+        label = str(ov.get("label", "")).strip().upper()
+        out["pass"] = 1 if label == "PASS" else 0
+        if not out["justification"]:
+            out["justification"] = str(ov.get("reason", "")).strip()
+
+    if not out["justification"]:
+        out["justification"] = "No justification provided."
+
+    if out["source"]["type"] not in ("rag", "prompt"):
+        out["source"]["type"] = "prompt"
+    if not out["source"]["quote"]:
+        out["source"]["quote"] = ""
+    return out
+
+
+def _cosine_similarity(a: List[float], b: List[float]) -> float:
+    if not a or not b or len(a) != len(b):
+        return -1.0
+    dot = 0.0
+    na = 0.0
+    nb = 0.0
+    for i in range(len(a)):
+        ai = float(a[i])
+        bi = float(b[i])
+        dot += ai * bi
+        na += ai * ai
+        nb += bi * bi
+    denom = math.sqrt(na) * math.sqrt(nb)
+    if denom == 0:
+        return -1.0
+    return dot / denom
+
+
+def _ollama_embed(host: str, model: str, text: str) -> List[float]:
+    url = host.rstrip("/") + "/api/embed"
+    body = {"model": model, "input": text}
+    r = requests.post(url, json=body, timeout=180)
+    r.raise_for_status()
+    data = r.json()
+    embeddings = data.get("embeddings")
+    if not isinstance(embeddings, list) or not embeddings:
+        raise RuntimeError(f"Unexpected embed response: {data}")
+    emb = embeddings[0]
+    if not isinstance(emb, list):
+        raise RuntimeError(f"Unexpected embedding vector: {type(emb)}")
+    return emb
+
+
+def _retrieve_policy_context(
+    db_path: str,
+    host: str,
+    embed_model: str,
+    query: str,
+    k: int,
+) -> Dict[str, Any]:
+    if not os.path.exists(db_path):
+        raise RuntimeError(f"RAG DB not found: {db_path}")
+
+    query_embedding = _ollama_embed(host, embed_model, query)
+    conn = sqlite3.connect(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT source, chunk_index, text, embedding_json FROM chunks"
+        ).fetchall()
+    finally:
+        conn.close()
+
+    if not rows:
+        raise RuntimeError("RAG DB has no indexed chunks. Run scripts/rag_ingest.py first.")
+
+    scored: List[Dict[str, Any]] = []
+    for source, chunk_index, text, emb_json in rows:
+        emb = json.loads(emb_json)
+        score = _cosine_similarity(query_embedding, emb)
+        scored.append(
+            {
+                "source": source,
+                "chunk_index": chunk_index,
+                "text": text,
+                "score": score,
+            }
+        )
+    scored.sort(key=lambda x: x["score"], reverse=True)
+    top = scored[: max(1, k)]
+
+    contexts = []
+    sources = []
+    for i, item in enumerate(top):
+        contexts.append(
+            f"[{i+1}] source={item['source']} chunk={item['chunk_index']} score={item['score']:.4f}\n{item['text']}"
+        )
+        sources.append(
+            {
+                "rank": i + 1,
+                "source": item["source"],
+                "chunk_index": str(item["chunk_index"]),
+                "score": item["score"],
+            }
+        )
+    return {
+        "policy_context": "\n\n".join(contexts),
+        "policy_sources": sources,
+    }
+
+
 def main() -> None:
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     load_dotenv(dotenv_path=os.path.join(project_root, ".env"))
@@ -217,24 +386,58 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--input", default="data/input.csv", help="Path to input CSV")
     p.add_argument("--output", default="data/output.jsonl", help="Path to output .jsonl or .csv")
-    p.add_argument("--prompt", default="prompts/grader_system_prompt.md", help="System prompt path")
+    p.add_argument("--prompt", default="prompts/sample_prompt_1.md", help="System prompt path")
     p.add_argument("--host", default=os.getenv("OLLAMA_HOST", "http://localhost:11434"))
     p.add_argument("--model", default=os.getenv("OLLAMA_MODEL", "llama3.1:8b"))
+    p.add_argument(
+        "--embed-model",
+        default=os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text"),
+        help="Embedding model used for policy retrieval from local RAG DB.",
+    )
+    p.add_argument(
+        "--policy-db",
+        default=os.getenv("POLICY_DB_PATH", "data/vector_store.db"),
+        help="Local SQLite vector DB path generated by scripts/rag_ingest.py.",
+    )
+    p.add_argument("--rag-k", type=int, default=3, help="Top-k policy chunks to attach per graded row.")
+    p.add_argument(
+        "--allow-missing-rag",
+        action="store_true",
+        help="Allow grading to continue when policy retrieval fails (default: fail row).",
+    )
+    p.add_argument(
+        "--strict-decision-output",
+        action="store_true",
+        help="Require output to include pass/justification/source with a non-empty quote.",
+    )
     p.add_argument("--temperature", type=float, default=float(os.getenv("TEMPERATURE", "0.1")))
     p.add_argument("--max-tokens", type=int, default=int(os.getenv("MAX_TOKENS", "900")))
+    p.add_argument(
+        "--no-force-json",
+        action="store_true",
+        help="Disable Ollama JSON mode (enabled by default).",
+    )
     p.add_argument(
         "--sample-size",
         type=int,
         default=0,
-        help="Process only the first N rows from input CSV (0 = all rows)",
+        help="Process a random sample of N rows from input CSV (0 = all rows)",
+    )
+    p.add_argument(
+        "--sample-seed",
+        type=int,
+        default=None,
+        help="Optional random seed for reproducible sampling",
     )
     args = p.parse_args()
     args.input = _resolve_path(args.input, project_root)
     args.output = _resolve_path(args.output, project_root)
     args.prompt = _resolve_path(args.prompt, project_root)
+    args.policy_db = _resolve_path(args.policy_db, project_root)
     args.model = _resolve_ollama_model(args.host, args.model)
 
     system_prompt = _load_prompt(args.prompt)
+    system_prompt = f"{system_prompt}\n\n{DECISION_OUTPUT_SPEC}"
 
     out_is_csv = args.output.lower().endswith(".csv")
     out_is_jsonl = args.output.lower().endswith(".jsonl")
@@ -248,8 +451,12 @@ def main() -> None:
             raise SystemExit("Input CSV has no headers")
         for row in reader:
             rows.append(row)
-            if args.sample_size > 0 and len(rows) >= args.sample_size:
-                break
+
+    if args.sample_size < 0:
+        raise SystemExit("--sample-size must be >= 0")
+    if args.sample_size > 0 and len(rows) > args.sample_size:
+        rng = random.Random(args.sample_seed)
+        rows = rng.sample(rows, args.sample_size)
 
     results: List[Dict[str, Any]] = []
     for row in tqdm(rows, desc="grading"):
@@ -259,11 +466,47 @@ def main() -> None:
         notes = _get_row_value(row, "notes", "company_notes").strip()
         persona = _get_row_value(row, "persona").strip()
         blocked_words = _parse_blocked_words(_get_row_value(row, "blocked_words", "blocklisted_words"))
+        policy_query = _get_row_value(row, "policy_query", "policy", "policy_topic", "qa_policy").strip()
 
         conv = _parse_conversation(conv_raw)
         last_agent_message = _extract_last_agent_message(conv) or ""
 
         found_blocked = _find_blocked_words(last_agent_message, blocked_words)
+
+        if not policy_query:
+            policy_query = (
+                f"preferred_tone: {preferred_tone}\n"
+                f"notes: {notes}\n"
+                f"persona: {persona}\n"
+                f"last_agent_message: {last_agent_message}"
+            )
+
+        policy_context = ""
+        policy_sources: List[Dict[str, Any]] = []
+        rag_error = ""
+        try:
+            rag = _retrieve_policy_context(
+                db_path=args.policy_db,
+                host=args.host,
+                embed_model=args.embed_model,
+                query=policy_query,
+                k=args.rag_k,
+            )
+            policy_context = rag["policy_context"]
+            policy_sources = rag["policy_sources"]
+        except Exception as e:
+            rag_error = str(e)
+            if not args.allow_missing_rag:
+                results.append({
+                    "scenario_id": scenario_id,
+                    "preferred_message_tone": preferred_tone,
+                    "blocked_words_found": found_blocked,
+                    "last_agent_message": last_agent_message,
+                    "policy_query": policy_query,
+                    "policy_sources": [],
+                    "error": f"RAG policy retrieval failed: {rag_error}",
+                })
+                continue
 
         user_payload = {
             "scenario_id": scenario_id,
@@ -272,6 +515,9 @@ def main() -> None:
             "persona": persona,
             "blocked_words_found": found_blocked,
             "last_agent_message": last_agent_message,
+            "policy_query": policy_query,
+            "policy_context": policy_context,
+            "policy_sources": policy_sources,
         }
 
         try:
@@ -282,15 +528,29 @@ def main() -> None:
                 user_payload=user_payload,
                 temperature=args.temperature,
                 max_tokens=args.max_tokens,
+                force_json=not args.no_force_json,
             )
-            llm_json = _safe_json_loads(llm_text)
-            results.append({
+            result_row = {
                 "scenario_id": scenario_id,
                 "preferred_message_tone": preferred_tone,
                 "blocked_words_found": found_blocked,
                 "last_agent_message": last_agent_message,
-                "grades": llm_json,
-            })
+                "policy_query": policy_query,
+                "policy_sources": policy_sources,
+            }
+            if rag_error:
+                result_row["rag_warning"] = rag_error
+            try:
+                llm_json = _safe_json_loads(llm_text)
+                decision = _normalize_decision_output(llm_json)
+                if args.strict_decision_output and not decision["source"]["quote"]:
+                    raise RuntimeError("Missing required source.quote in model output.")
+                result_row["grades"] = llm_json
+                result_row["decision"] = decision
+            except Exception:
+                # Keep raw model text so custom prompt outputs do not fail the run.
+                result_row["grades_text"] = llm_text
+            results.append(result_row)
         except Exception as e:
             results.append({
                 "scenario_id": scenario_id,
@@ -313,27 +573,12 @@ def main() -> None:
         "scenario_id",
         "preferred_message_tone",
         "blocked_words_found",
-        "detected_tone",
-        "tone_match_label",
-        "tone_match_reason",
-        "blocked_words_check_label",
-        "blocked_words_check_reason",
-        "clarity_grammar_label",
-        "clarity_grammar_reason",
-        "clarity_typos_label",
-        "clarity_typos_reason",
-        "clarity_repetition_label",
-        "clarity_repetition_reason",
-        "clarity_understandable_label",
-        "clarity_understandable_reason",
-        "tone_empathy_label",
-        "tone_empathy_reason",
-        "tone_personalize_label",
-        "tone_personalize_reason",
-        "tone_preferred_label",
-        "tone_preferred_reason",
-        "overall_label",
-        "overall_reason",
+        "policy_query",
+        "policy_sources",
+        "pass",
+        "justification",
+        "source_type",
+        "source_quote",
         "error",
     ]
 
@@ -345,46 +590,18 @@ def main() -> None:
             out["scenario_id"] = r.get("scenario_id")
             out["preferred_message_tone"] = r.get("preferred_message_tone", "")
             out["blocked_words_found"] = json.dumps(r.get("blocked_words_found", []), ensure_ascii=False)
+            out["policy_query"] = r.get("policy_query", "")
+            out["policy_sources"] = json.dumps(r.get("policy_sources", []), ensure_ascii=False)
             out["error"] = r.get("error", "")
 
-            g = r.get("grades") or {}
-            if isinstance(g, dict):
-                out["detected_tone"] = g.get("detected_tone", "")
-                tm = g.get("tone_match") or {}
-                out["tone_match_label"] = tm.get("label", "")
-                out["tone_match_reason"] = tm.get("reason", "")
-                bw = g.get("blocked_words_check") or {}
-                out["blocked_words_check_label"] = bw.get("label", "")
-                out["blocked_words_check_reason"] = bw.get("reason", "")
-
-                cl = g.get("clarity") or {}
-                ge = cl.get("grammar_errors_and_meaning") or {}
-                ty = cl.get("typos") or {}
-                rp = cl.get("repetition") or {}
-                un = cl.get("understandable") or {}
-                out["clarity_grammar_label"] = ge.get("label", "")
-                out["clarity_grammar_reason"] = ge.get("reason", "")
-                out["clarity_typos_label"] = ty.get("label", "")
-                out["clarity_typos_reason"] = ty.get("reason", "")
-                out["clarity_repetition_label"] = rp.get("label", "")
-                out["clarity_repetition_reason"] = rp.get("reason", "")
-                out["clarity_understandable_label"] = un.get("label", "")
-                out["clarity_understandable_reason"] = un.get("reason", "")
-
-                tn = g.get("tone") or {}
-                em = tn.get("empathy") or {}
-                ps = tn.get("personalize") or {}
-                pt = tn.get("preferred_tone_followed") or {}
-                out["tone_empathy_label"] = em.get("label", "")
-                out["tone_empathy_reason"] = em.get("reason", "")
-                out["tone_personalize_label"] = ps.get("label", "")
-                out["tone_personalize_reason"] = ps.get("reason", "")
-                out["tone_preferred_label"] = pt.get("label", "")
-                out["tone_preferred_reason"] = pt.get("reason", "")
-
-                ov = g.get("overall") or {}
-                out["overall_label"] = ov.get("label", "")
-                out["overall_reason"] = ov.get("reason", "")
+            d = r.get("decision") or {}
+            if isinstance(d, dict):
+                out["pass"] = d.get("pass", "")
+                out["justification"] = d.get("justification", "")
+                src = d.get("source") or {}
+                if isinstance(src, dict):
+                    out["source_type"] = src.get("type", "")
+                    out["source_quote"] = src.get("quote", "")
 
             w.writerow(out)
 

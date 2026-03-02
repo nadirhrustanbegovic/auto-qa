@@ -6,3 +6,6 @@ __pycache__/
 .idea/
 .vscode/.cache/
 data/output.*
+data/vector_store.db
+data/rag_answer*.json
+data/_tmp*.jsonl
